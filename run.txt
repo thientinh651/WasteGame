@@ -1,0 +1,3 @@
+py -3.11 launch_game.py    # Game "Chiến Binh Xanh" (game_ui.html + game_api.py)
+py -3.11 app_windows.py    # App Gradio phân loại rác (app_multiclass.py)
+py -3.11 app_multiclass.py # Chạy riêng Gradio

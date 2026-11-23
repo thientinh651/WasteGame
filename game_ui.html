@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chiến Binh Xanh - Anh Hùng Môi Trường</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&display=swap');
+        body { font-family: 'Quicksand', sans-serif; background-color: #f0fdf4; overflow: hidden; height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .bouncing { animation: bounce 2s infinite; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .progress-fill { transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .achievement-pop { animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); } }
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #10b981; border-radius: 10px; }
+        .map-card { transition: all 0.3s ease; border-radius: 20px; }
+    </style>
+</head>
+<body class="p-2 select-none">
+
+    <div class="flex flex-col w-full max-w-md h-[95vh]">
+        <!-- Thanh trạng thái cấp độ -->
+        <div class="mb-3 bg-white p-4 rounded-[2rem] shadow-lg border-2 border-green-100 shrink-0">
+            <div class="flex justify-between items-end mb-2">
+                <div class="flex items-center gap-3">
+                    <div id="lvl-circle" class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl flex flex-col items-center justify-center text-white shadow-lg border-2 border-white">
+                        <span class="text-[8px] font-black leading-none uppercase">Cấp</span>
+                        <span id="level-display" class="text-xl font-black">1</span>
+                    </div>
+                    <div>
+                        <h3 id="rank-display" class="font-black text-green-700 uppercase text-xs tracking-tighter">Tập sự Xanh</h3>
+                        <div class="flex gap-1">
+                            <span id="star-1" class="text-gray-300 text-[10px]">⭐</span>
+                            <span id="star-2" class="text-gray-300 text-[10px]">⭐</span>
+                            <span id="star-3" class="text-gray-300 text-[10px]">⭐</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-[8px] font-black text-gray-400 uppercase">Điểm tích lũy</p>
+                    <p id="score-display" class="text-2xl font-black text-green-600 leading-none">0</p>
+                </div>
+            </div>
+            <div class="w-full bg-gray-100 h-3 rounded-full p-0.5 border border-gray-200">
+                <div id="exp-bar" class="bg-gradient-to-r from-green-400 to-blue-500 h-full rounded-full progress-fill" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Khung Game chính -->
+        <div id="game-container" class="bg-white rounded-[3rem] shadow-2xl overflow-hidden border-8 border-white relative flex-1 flex flex-col min-h-0">
+            
+            <!-- Nút Quay lại - Đảm bảo nổi bật và tách biệt -->
+            <button id="back-home-btn" onclick="showScreen('start-screen')" class="hidden absolute top-4 left-4 z-50 bg-white/90 backdrop-blur p-2.5 rounded-full shadow-2xl text-green-600 active:scale-90 transition-all border border-green-100">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+
+            <!-- MÀN HÌNH CHỜ -->
+            <div id="start-screen" class="p-8 text-center space-y-4 flex-1 flex flex-col justify-center overflow-y-auto">
+                <div class="text-7xl bouncing">🤖</div>
+                <h2 class="text-2xl font-black text-green-600 uppercase tracking-tighter leading-none">Chiến Binh Xanh</h2>
+                <div class="flex flex-col gap-3 px-4">
+                    <button onclick="startGame('mission')" class="bg-green-500 hover:bg-green-600 text-white font-bold py-5 rounded-[2rem] shadow-[0_6px_0_0_#059669] active:translate-y-1 transition-all text-xl uppercase">Làm Nhiệm Vụ 🚀</button>
+                    <button onclick="startGame('explorer')" class="bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-4 rounded-[2rem] shadow-[0_6px_0_0_#d97706] active:translate-y-1 transition-all text-lg uppercase">Khám Phá Tự Do 🔍</button>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="showScreen('map-screen')" class="bg-blue-50 text-blue-600 font-bold py-3 rounded-2xl border-2 border-blue-100 text-[9px] uppercase">🗺️ Bản đồ</button>
+                        <button onclick="showLearning()" class="bg-blue-50 text-blue-600 font-bold py-3 rounded-2xl border-2 border-blue-100 text-[9px] uppercase">📚 Bí kíp</button>
+                        <button onclick="showCollection()" class="bg-purple-50 text-purple-600 font-bold py-3 rounded-2xl border-2 border-purple-100 text-[9px] uppercase">🏆 Túi đồ</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MÀN HÌNH BẢN ĐỒ -->
+            <div id="map-screen" class="hidden flex-1 p-6 bg-blue-50 overflow-y-auto custom-scroll">
+                <h2 class="text-2xl font-black text-blue-700 uppercase mb-4 text-center">Thế Giới Của Bé</h2>
+                <div class="space-y-4">
+                    <div class="bg-white p-4 rounded-3xl shadow-md border-2 border-blue-200 flex items-center gap-4">
+                        <div class="text-3xl">🌊</div>
+                        <div class="flex-1">
+                            <p class="font-bold text-blue-600 uppercase text-[10px]">Đại Dương Xanh</p>
+                            <div class="w-full bg-gray-100 h-2 rounded-full mt-1"><div id="map-ocean-bar" class="bg-blue-400 h-full rounded-full" style="width: 0%"></div></div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-4 rounded-3xl shadow-md border-2 border-green-200 flex items-center gap-4">
+                        <div class="text-3xl">🌳</div>
+                        <div class="flex-1">
+                            <p class="font-bold text-green-600 uppercase text-[10px]">Rừng Muôn Thú</p>
+                            <div class="w-full bg-gray-100 h-2 rounded-full mt-1"><div id="map-forest-bar" class="bg-green-400 h-full rounded-full" style="width: 0%"></div></div>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="showScreen('start-screen')" class="w-full mt-6 bg-blue-500 text-white font-bold py-3 rounded-2xl shadow-lg uppercase text-xs">Quay lại</button>
+            </div>
+
+            <!-- MÀN HÌNH CHỜ QUÉT RÁC -->
+            <div id="play-screen" class="hidden flex flex-col flex-1 min-h-0">
+                <div id="mission-header" class="bg-blue-600 p-4 text-white shadow-xl relative z-20 shrink-0">
+                    <div class="flex items-center justify-between gap-2 mb-1">
+                        <!-- Tăng padding-left (pl-14) để tránh nút Quay lại -->
+                        <div class="flex items-center gap-2 pl-14">
+                            <span class="w-2 h-2 bg-red-400 rounded-full animate-ping"></span>
+                            <p id="mode-title" class="text-[9px] uppercase font-black opacity-70 tracking-widest uppercase">Nhiệm vụ</p>
+                        </div>
+                        <button id="change-mission-btn" onclick="nextMission()" class="bg-white/20 hover:bg-white/30 text-[9px] font-bold px-2 py-1 rounded uppercase flex items-center gap-1">
+                            <span>Đổi</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3m-3-3-2.25-2.25"/></svg>
+                        </button>
+                    </div>
+                    <div class="pl-14 pr-2">
+                        <p id="mission-text" class="text-sm font-bold leading-tight mb-1"></p>
+                        <p id="mission-hint" class="text-[10px] italic opacity-80 font-medium text-blue-100"></p>
+                    </div>
+                </div>
+                
+                <div class="relative flex-1 bg-gray-900 overflow-hidden flex items-center justify-center">
+                    <video id="webcam" autoplay playsinline class="w-full h-full object-cover"></video>
+                    <div id="preview-container" class="hidden w-full h-full relative">
+                        <img id="upload-preview" class="w-full h-full object-contain bg-black" />
+                        <button onclick="cancelUpload()" class="absolute top-4 right-4 bg-red-500 text-white p-2 rounded-full shadow-xl z-30">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        </button>
+                    </div>
+                    
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div class="w-64 h-64 border-4 border-dashed border-white/20 rounded-[4rem]"></div>
+                    </div>
+                    <div id="loading-overlay" class="hidden absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-white backdrop-blur-md z-40">
+                        <div class="w-10 h-10 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mb-4"></div>
+                        <p class="font-black uppercase tracking-widest text-xs text-center px-4">Robot đang soi rác...</p>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-white border-t-2 border-gray-100 shrink-0 space-y-3">
+                    <button id="main-action-btn" onclick="captureImage()" class="w-full bg-green-500 text-white font-black py-4 rounded-3xl shadow-[0_4px_0_0_#059669] active:translate-y-1 transition-all uppercase text-lg">📸 Chụp rác ngay</button>
+                    <div class="flex gap-2">
+                        <button onclick="document.getElementById('file-input').click()" class="flex-1 bg-gray-50 border-2 border-gray-200 text-gray-500 font-bold py-2.5 rounded-2xl uppercase text-[9px] text-center">📁 Tải ảnh lên</button>
+                        <button onclick="toggleCamera()" class="px-5 bg-gray-100 text-gray-400 rounded-2xl text-[9px] font-bold">🔄 Cam</button>
+                    </div>
+                    <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFileUpload(event)">
+                </div>
+            </div>
+
+            <!-- MÀN HÌNH KẾT QUẢ -->
+            <div id="result-screen" class="hidden p-6 flex-1 flex flex-col overflow-y-auto custom-scroll text-center">
+                <div class="space-y-4 mb-6">
+                    <div id="result-icon" class="text-7xl achievement-pop"></div>
+                    <div class="space-y-1">
+                        <h2 id="result-title" class="text-3xl font-black uppercase tracking-tighter leading-none"></h2>
+                        <p id="result-label-vn" class="text-lg font-bold text-gray-400"></p>
+                    </div>
+                    <div id="bin-info-card" class="p-4 rounded-[2rem] text-white shadow-xl transform rotate-1">
+                        <p class="text-[8px] font-black uppercase opacity-80 mb-1 uppercase">Thùng rác phù hợp:</p>
+                        <p id="bin-text" class="text-xl font-black italic uppercase"></p>
+                    </div>
+                    <div class="bg-yellow-50 p-4 rounded-2xl border-2 border-yellow-100 text-left relative overflow-hidden">
+                        <p class="text-yellow-600 font-black text-[10px] uppercase mb-1 flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/><path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+                            <span>Bé có biết?</span>
+                        </p>
+                        <p id="result-fact" class="text-gray-700 text-xs leading-relaxed font-medium italic"></p>
+                    </div>
+                </div>
+                <div id="result-actions" class="mt-auto flex flex-col gap-2 pb-2"></div>
+            </div>
+
+            <!-- MÀN HÌNH BÍ KÍP -->
+            <div id="learning-screen" class="hidden flex-1 p-6 bg-blue-50 overflow-y-auto custom-scroll">
+                <h2 class="text-2xl font-black text-blue-700 uppercase mb-6 text-center">Bí kíp Anh hùng</h2>
+                <div id="learning-content" class="space-y-4 pb-10"></div>
+            </div>
+
+            <!-- MÀN HÌNH TÚI ĐỒ -->
+            <div id="collection-screen" class="hidden flex-1 p-8 bg-purple-50 overflow-y-auto custom-scroll">
+                <h2 class="text-2xl font-black text-purple-700 uppercase mb-8 text-center">Bộ sưu tập rác</h2>
+                <div id="collection-grid" class="grid grid-cols-3 gap-4"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <canvas id="photo-canvas" class="hidden"></canvas>
+
+    <script>
+        let state = { score: 0, level: 1, exp: 0, collection: [], currentTarget: "", mode: "mission" };
+        let isUsingWebcam = false;
+
+        const wasteDictionary = {
+            'battery': { vn: 'Pin cũ (Nguy hại)', bin: 'Thùng Đỏ', binColor: 'bg-red-500', fact: 'Pin chứa chì và thủy ngân rất độc. Bé hãy nhờ người lớn mang đến điểm thu gom pin nhé!', icon: '🔋', examples: 'Pin tiểu, pin điện thoại, pin đồng hồ' },
+            'biological': { vn: 'Rác hữu cơ', bin: 'Thùng Xanh lá', binColor: 'bg-green-600', fact: 'Vỏ trái cây, rau củ sau khi phân hủy sẽ biến thành phân bón giúp cây xanh mau lớn!', icon: '🍌', examples: 'Vỏ chuối, rau thừa, lá cây khô, vỏ trứng' },
+            'glass': { vn: 'Thủy tinh', bin: 'Thùng Cam', binColor: 'bg-orange-500', fact: 'Thủy tinh có thể tái chế mãi mãi! Đừng để vỡ kẻo gây nguy hiểm cho mọi người bé nhé.', icon: '🍷', examples: 'Chai lọ thủy tinh, ly cốc, lọ nước hoa' },
+            'cardboard': { vn: 'Bìa Carton', bin: 'Thùng Cam', binColor: 'bg-orange-500', fact: 'Thùng giấy sau khi dùng xong có thể tái chế thành những chiếc hộp mới xinh xắn!', icon: '📦', examples: 'Thùng giấy, hộp bánh, vỏ hộp sữa bằng giấy' },
+            'clothes': { vn: 'Quần áo cũ', bin: 'Thùng Cam', binColor: 'bg-orange-500', fact: 'Quần áo cũ có thể quyên góp cho các bạn nhỏ khó khăn hoặc tái chế thành sợi vải.', icon: '👕', examples: 'Áo phông cũ, quần vải hỏng, khăn quàng' },
+            'metal': { vn: 'Kim loại', bin: 'Thùng Cam', binColor: 'bg-orange-500', fact: 'Lon nước ngọt có thể tái chế để làm thành vỏ máy bay hoặc ô tô cực kỳ bền!', icon: '🥫', examples: 'Lon nhôm, cái thìa sắt hỏng, vỏ hộp sữa bột' },
+            'paper': { vn: 'Giấy vụn', bin: 'Thùng Cam', binColor: 'bg-orange-500', fact: 'Cứ 1 tấn giấy tái chế sẽ cứu được 17 cây xanh không bị chặt hạ! Hãy tiết kiệm giấy bé nhé.', icon: '📄', examples: 'Sách vở cũ, báo chí, phong bì' },
+            'plastic': { vn: 'Nhựa', bin: 'Thùng Cam', binColor: 'bg-orange-500', fact: 'Chai nhựa mất đến 450 năm mới phân hủy hết. Bé hãy dùng bình nước cá nhân để cứu cá voi nhé!', icon: '🥤', examples: 'Chai nước suối, túi nilon, hộp nhựa' },
+            'shoes': { vn: 'Giày dép cũ', bin: 'Thùng Cam', binColor: 'bg-orange-500', fact: 'Giày dép cũ có thể được băm nhỏ để làm bề mặt sân chơi thể thao cực kỳ êm ái.', icon: '👟', examples: 'Dép nhựa cũ, giày vải hỏng' },
+            'trash': { vn: 'Rác không tái chế', bin: 'Thùng Xám', binColor: 'bg-gray-500', fact: 'Đây là rác không tái chế được và không độc hại. Hãy bỏ vào thùng xám để mang đi xử lý nhé.', icon: '🗑️', examples: 'Tăm bông, băng keo, gốm sứ vỡ, đầu lọc thuốc lá' }
+        };
+
+        const aiDetailNames = {
+            'brown-glass': { vn: 'Thủy tinh nâu', icon: '🤎' },
+            'green-glass': { vn: 'Thủy tinh xanh', icon: '💚' },
+            'white-glass': { vn: 'Thủy tinh trắng', icon: '🤍' }
+        };
+
+        // Danh sách nhiệm vụ với các từ khóa được bôi màu nổi bật
+        const missions = [
+            { id: "battery", text: "Tìm rác <span class='text-yellow-300 font-black underline'>NGUY HẠI</span> (Bỏ Thùng Đỏ)!", hint: "Ví dụ: Pin cũ, pin điện thoại..." },
+            { id: "biological", text: "Tìm rác <span class='text-yellow-300 font-black underline'>HỮU CƠ</span> giúp cây xanh!", hint: "Ví dụ: Vỏ chuối, rau thừa, lá cây..." },
+            { id: "glass", text: "Tìm rác <span class='text-yellow-300 font-black underline'>THỦY TINH</span> để tái chế!", hint: "Ví dụ: Chai lọ, ly cốc thủy tinh..." },
+            { id: "cardboard", text: "Tìm rác <span class='text-yellow-300 font-black underline'>BÌA CARTON</span> cũ!", hint: "Ví dụ: Thùng giấy, hộp bánh kẹo..." },
+            { id: "clothes", text: "Tìm <span class='text-yellow-300 font-black underline'>QUẦN ÁO</span> cũ không dùng nữa!", hint: "Ví dụ: Áo phông, quần vải cũ..." },
+            { id: "metal", text: "Tìm lon nước hoặc đồ <span class='text-yellow-300 font-black underline'>KIM LOẠI</span>!", hint: "Ví dụ: Lon nhôm, vỏ hộp sữa bột..." },
+            { id: "paper", text: "Tìm <span class='text-yellow-300 font-black underline'>GIẤY</span> vụn để cứu rừng xanh!", hint: "Ví dụ: Sách báo cũ, giấy viết..." },
+            { id: "plastic", text: "Tìm đồ <span class='text-yellow-300 font-black underline'>NHỰA</span> cứu cá voi nhé!", hint: "Ví dụ: Chai nước suối, túi nilon..." },
+            { id: "shoes", text: "Tìm chiếc <span class='text-yellow-300 font-black underline'>GIÀY</span> hoặc <span class='text-yellow-300 font-black underline'>DÉP</span> cũ hỏng!", hint: "Ví dụ: Dép nhựa, giày vải hỏng..." },
+            { id: "trash", text: "Tìm <span class='text-yellow-300 font-black underline'>RÁC KHÔNG TÁI CHẾ</span> (Bỏ Thùng Xám)!", hint: "Ví dụ: Tăm bông, băng keo, gốm vỡ..." }
+        ];
+
+        function showScreen(id) {
+            ['start-screen', 'play-screen', 'result-screen', 'learning-screen', 'collection-screen', 'map-screen'].forEach(s => document.getElementById(s).classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            document.getElementById('back-home-btn').classList.toggle('hidden', id === 'start-screen');
+            if (id !== 'play-screen') stopCamera();
+            if (id === 'map-screen') updateMapProgress();
+        }
+
+        function updateProgress(gainedExp = 0) {
+            state.exp += gainedExp;
+            const expToNext = state.level * 60;
+            if (state.exp >= expToNext) { state.exp -= expToNext; state.level++; }
+            document.getElementById('exp-bar').style.width = (state.exp / expToNext * 100) + '%';
+            document.getElementById('level-display').innerText = state.level;
+            document.getElementById('score-display').innerText = state.score;
+            const ranks = ["Tập sự Xanh", "Hiệp sĩ Nhí", "Bảo vệ Trái Đất", "Anh hùng"];
+            document.getElementById('rank-display').innerText = ranks[Math.min(state.level - 1, 3)];
+            for(let i=1; i<=3; i++) document.getElementById(`star-${i}`).style.color = (state.level > i) ? '#fbbf24' : '#d1d5db';
+        }
+
+        function updateMapProgress() {
+            const collected = state.collection;
+            const oceanTypes = ['plastic', 'metal'];
+            const forestTypes = ['battery', 'biological'];
+            document.getElementById('map-ocean-bar').style.width = (oceanTypes.filter(t => collected.includes(t)).length / 2 * 100) + '%';
+            document.getElementById('map-forest-bar').style.width = (forestTypes.filter(t => collected.includes(t)).length / 2 * 100) + '%';
+        }
+
+        async function startGame(mode) { 
+            state.mode = mode;
+            showScreen('play-screen'); 
+            cancelUpload(); 
+            const header = document.getElementById('mission-header');
+            const modeTitle = document.getElementById('mode-title');
+            const changeBtn = document.getElementById('change-mission-btn');
+            if (mode === 'explorer') {
+                header.className = "bg-yellow-500 p-4 text-white shadow-xl relative z-20 shrink-0";
+                modeTitle.innerText = "Khám phá tự do";
+                document.getElementById('mission-text').innerText = "Bé hãy quét bất kỳ rác nào bé thấy nhé!";
+                document.getElementById('mission-hint').innerText = "Mắt thần AI sẽ giúp bé phân loại rác!";
+                changeBtn.classList.add('hidden');
+            } else {
+                header.className = "bg-blue-600 p-4 text-white shadow-xl relative z-20 shrink-0";
+                modeTitle.innerText = "Nhiệm vụ Anh hùng";
+                changeBtn.classList.remove('hidden');
+                nextMission(); 
+            }
+            initCamera(); 
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                document.getElementById('upload-preview').src = e.target.result;
+                document.getElementById('preview-container').classList.remove('hidden');
+                document.getElementById('webcam').classList.add('hidden');
+                document.getElementById('main-action-btn').innerText = "⚡ Quét ảnh này";
+                isUsingWebcam = false;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function cancelUpload() {
+            document.getElementById('preview-container').classList.add('hidden');
+            document.getElementById('upload-preview').src = "";
+            document.getElementById('webcam').classList.remove('hidden');
+            document.getElementById('main-action-btn').innerText = "📸 Chụp rác ngay";
+            document.getElementById('file-input').value = ""; 
+            if (!isUsingWebcam) initCamera();
+        }
+
+        async function initCamera() {
+            try {
+                const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                document.getElementById('webcam').srcObject = s; isUsingWebcam = true;
+            } catch (e) { console.warn("Cam error"); }
+        }
+        function stopCamera() { const v = document.getElementById('webcam'); const s = v.srcObject; if(s) s.getTracks().forEach(t => t.stop()); v.srcObject = null; isUsingWebcam = false; }
+        function toggleCamera() { if (isUsingWebcam) stopCamera(); else initCamera(); }
+
+        async function captureImage() {
+            let dataUrl = isUsingWebcam ? (() => {
+                const v = document.getElementById('webcam'); const c = document.getElementById('photo-canvas');
+                c.width = v.videoWidth; c.height = v.videoHeight;
+                c.getContext('2d').drawImage(v, 0, 0);
+                return c.toDataURL('image/jpeg');
+            })() : document.getElementById('upload-preview').src;
+            if(dataUrl) sendToAI(dataUrl);
+        }
+
+        async function sendToAI(base64) {
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            try {
+                const res = await fetch('http://127.0.0.1:8000/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: base64 })
+                });
+                const data = await res.json();
+                handleResult(data);
+            } catch (e) { alert("Lỗi kết nối Robot!"); }
+            finally { document.getElementById('loading-overlay').classList.add('hidden'); }
+        }
+
+        function nextMission() {
+            cancelUpload();
+            const m = missions[Math.floor(Math.random() * missions.length)];
+            state.currentTarget = m.id;
+            // Dùng innerHTML để hiển thị được mã màu từ m.text
+            document.getElementById('mission-text').innerHTML = m.text;
+            document.getElementById('mission-hint').innerText = m.hint;
+        }
+
+        function handleResult(data) {
+            let raw = data.label;
+            let logic = raw.includes('glass') ? 'glass' : raw;
+            const info = wasteDictionary[logic] || { vn: raw, fact: 'Robot đang học rác này...', icon: '❓', bin: 'Thùng Xám', binColor: 'bg-gray-500' };
+            const detail = aiDetailNames[raw] || { vn: info.vn, icon: info.icon };
+            const isWin = (state.mode === 'explorer') ? true : (logic === state.currentTarget);
+            
+            if (isWin) {
+                state.score += (state.mode === 'explorer') ? 10 : 50; 
+                updateProgress((state.mode === 'explorer') ? 10 : 30);
+                if(!state.collection.includes(logic)) state.collection.push(logic);
+                document.getElementById('result-icon').innerText = "🌟";
+                document.getElementById('result-title').innerText = (state.mode === 'explorer') ? "ĐÃ KHÁM PHÁ!" : "QUÁ GIỎI!";
+                document.getElementById('result-title').className = "text-3xl font-black text-green-600 uppercase achievement-pop";
+            } else {
+                updateProgress(5);
+                document.getElementById('result-icon').innerText = "🧐";
+                document.getElementById('result-title').innerText = "SAI RỒI BÉ ƠI";
+                document.getElementById('result-title').className = "text-3xl font-black text-orange-500 uppercase";
+            }
+            document.getElementById('result-label-vn').innerText = `${detail.icon} Đây là ${detail.vn}`;
+            document.getElementById('result-fact').innerText = info.fact;
+            document.getElementById('bin-info-card').className = `p-5 rounded-[2rem] text-white shadow-xl ${info.binColor} transform -rotate-1`;
+            document.getElementById('bin-text').innerText = `👉 Bỏ vào ${info.bin}`;
+            const actions = document.getElementById('result-actions');
+            if (state.mode === 'explorer') {
+                actions.innerHTML = `<button onclick="showScreen('play-screen');cancelUpload();" class="bg-yellow-400 text-white font-black py-5 rounded-3xl shadow-[0_5px_0_0_#d97706] uppercase text-lg">Tiếp tục 🔍</button><button onclick="showScreen('start-screen')" class="text-gray-400 font-black py-1 uppercase text-[9px]">Quay lại</button>`;
+            } else {
+                actions.innerHTML = isWin ? `<button onclick="nextMission();showScreen('play-screen');" class="bg-blue-600 text-white font-black py-5 rounded-3xl shadow-[0_5px_0_0_#2563eb] uppercase text-lg">Tiếp theo ➡️</button>` : `<button onclick="cancelUpload();showScreen('play-screen');" class="bg-green-550 text-white font-black py-4 rounded-2xl uppercase">Thử lại 💪</button><button onclick="nextMission();showScreen('play-screen');" class="text-gray-400 font-black py-1 uppercase text-[9px]">Đổi thử thách</button>`;
+            }
+            showScreen('result-screen');
+        }
+
+        function showLearning() {
+            const content = document.getElementById('learning-content'); content.innerHTML = '';
+            for (let k in wasteDictionary) {
+                const i = wasteDictionary[k];
+                content.innerHTML += `
+                    <div class="bg-white p-4 rounded-3xl shadow-sm border-l-[10px] ${i.binColor.replace('bg-', 'border-')} flex gap-3 items-start">
+                        <span class="text-3xl">${i.icon}</span>
+                        <div>
+                            <p class="font-black text-gray-800 text-base leading-none mb-1">${i.vn}</p>
+                            <span class="text-[8px] px-2 py-0.5 rounded-full ${i.binColor} text-white font-bold uppercase uppercase">${i.bin}</span>
+                            <p class="text-[10px] text-gray-400 mt-2 font-bold italic underline">Ví dụ: ${i.examples}</p>
+                            <p class="text-[10px] text-gray-500 mt-1 font-medium">${i.fact}</p>
+                        </div>
+                    </div>`;
+            }
+            showScreen('learning-screen');
+        }
+        function showCollection() {
+            const grid = document.getElementById('collection-grid'); grid.innerHTML = '';
+            for (let key in wasteDictionary) {
+                const i = wasteDictionary[key]; const collected = state.collection.includes(key);
+                grid.innerHTML += `<div class="flex flex-col items-center gap-2 p-3 rounded-3xl border-2 ${collected ? 'bg-white border-green-200 shadow-lg' : 'bg-gray-100 border-gray-200 opacity-40'} transition-all"><span class="text-3xl">${collected ? i.icon : '🔒'}</span><span class="text-[8px] font-black text-gray-500 uppercase uppercase text-center">${collected ? i.vn : 'Khóa'}</span></div>`;
+            }
+            showScreen('collection-screen');
+        }
+        updateProgress();
+    </script>
+</body>
+</html>
